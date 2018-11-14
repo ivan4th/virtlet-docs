@@ -76,23 +76,22 @@
     <li class="toctree-l3"><a href="#defining-a-vm-pod">Defining a VM Pod</a></li>
     
 
-    <li class="toctree-l3"><a href="#annotations-recognized-by-virtlet">Annotations recognized by Virtlet</a></li>
+    <li class="toctree-l3"><a href="#cri-proxy-annotation">CRI Proxy annotation</a></li>
     
-        <ul>
-        
-            <li><a class="toctree-l4" href="#cri-proxy-annotation">CRI Proxy annotation</a></li>
-        
-            <li><a class="toctree-l4" href="#chowning-9pfs-mounts">Chowning 9pfs mounts</a></li>
-        
-            <li><a class="toctree-l4" href="#cpu-model">CPU Model</a></li>
-        
-            <li><a class="toctree-l4" href="#disk-driver">Disk driver</a></li>
-        
-            <li><a class="toctree-l4" href="#injecting-files-into-the-image">Injecting files into the image</a></li>
-        
-            <li><a class="toctree-l4" href="#vcpu-count">vCPU count</a></li>
-        
-        </ul>
+
+    <li class="toctree-l3"><a href="#chowning-9pfs-mounts">Chowning 9pfs mounts</a></li>
+    
+
+    <li class="toctree-l3"><a href="#cpu-model">CPU Model</a></li>
+    
+
+    <li class="toctree-l3"><a href="#disk-driver">Disk driver</a></li>
+    
+
+    <li class="toctree-l3"><a href="#injecting-files-into-the-image">Injecting files into the image</a></li>
+    
+
+    <li class="toctree-l3"><a href="#vcpu-count">vCPU count</a></li>
     
 
     <li class="toctree-l3"><a href="#volume-handling">Volume handling</a></li>
@@ -299,7 +298,7 @@ spec:
         memory: 160Mi
 </code></pre>
 
-<h1 id="annotations-recognized-by-virtlet">Annotations recognized by Virtlet</h1>
+<h1 id="annotations-recognized-by-virtlet"><a name="annotations"></a>Annotations recognized by Virtlet</h1>
 <p>The annotations can be specified under <code>annotations</code> key of the
 <code>metadata</code> part of the pod spec. Note that the values are always
 strings, but they can be parsed in different way by Virtlet (see Type
@@ -332,49 +331,49 @@ are described in detail in the
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitImageType</a></sub></td>
-<td><a href="../cloud-init/">Cloud-Init</a> image type to use</td>
+<td><sub><a href="../cloud-init/##output-iso-image-format">VirtletCloudInitImageType</a></sub></td>
+<td><a href="../cloud-init/##output-iso-image-format">Cloud-Init</a> image type to use</td>
 <td><code>"nocloud"</code> <code>"configdrive"</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitMetaData</a></sub></td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletCloudInitMetaData</a></sub></td>
 <td>The contents of <a href="../cloud-init/">Cloud-Init</a> metadata</td>
 <td>json / yaml</td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitUserData</a></sub></td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletCloudInitUserData</a></sub></td>
 <td>The contents of <a href="../cloud-init/">Cloud-Init</a> user-data (mergeable)</td>
 <td>json / yaml</td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitUserDataOverwrite</a></sub></td>
-<td>Disable merging of <a href="../cloud-init">Cloud-Init</a> user-data keys</td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletCloudInitUserDataOverwrite</a></sub></td>
+<td>Disable merging of <a href="../cloud-init/">Cloud-Init</a> user-data keys</td>
 <td>boolean</td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitUserDataScript</a></sub></td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletCloudInitUserDataScript</a></sub></td>
 <td>The contents of <a href="../cloud-init/">Cloud-Init</a> user-data as a script</td>
 <td>text</td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitUserDataSource</a></sub></td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletCloudInitUserDataSource</a></sub></td>
 <td>Data source for <a href="../cloud-init/">Cloud-Init</a> user-data</td>
 <td><code>"configmap/..."</code> <code>"secret/..."</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitUserDataSourceEncoding</a></sub></td>
+<td><sub><a href="../cloud-init/#propagating-user-data-from-kubernetes-objects">VirtletCloudInitUserDataSourceEncoding</a></sub></td>
 <td>Encoding to use for loading <a href="../cloud-init/">Cloud-Init</a> user-data from a ConfigMap key</td>
 <td><code>"plain"</code></td>
 <td><code>"base|4"</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init/">VirtletCloudInitUserDataSourceKey</a></sub></td>
+<td><sub><a href="../cloud-init/#propagating-user-data-from-kubernetes-objects">VirtletCloudInitUserDataSourceKey</a></sub></td>
 <td>ConfigMap key to load <a href="../cloud-init/">Cloud-Init</a> user-data from</td>
 <td></td>
 <td><code>""</code></td>
@@ -410,13 +409,13 @@ are described in detail in the
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init">VirtletSSHKeys</a></sub></td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletSSHKeys</a></sub></td>
 <td>SSH keys to add to the VM injected via <a href="../cloud-init/">Cloud-Init</a></td>
 <td>a list of strings</td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><sub><a href="../cloud-init">VirtletSSHKeySource</a></sub></td>
+<td><sub><a href="../cloud-init/#detailed-structure-of-the-generated-files">VirtletSSHKeySource</a></sub></td>
 <td>Data source for ssh keys injected via <a href="../cloud-init/">Cloud-Init</a></td>
 <td><code>"configmap/..."</code> <code>"secret/..."</code></td>
 <td><code>""</code></td>
