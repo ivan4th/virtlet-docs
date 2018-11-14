@@ -76,22 +76,23 @@
     <li class="toctree-l3"><a href="#defining-a-vm-pod">Defining a VM Pod</a></li>
     
 
-    <li class="toctree-l3"><a href="#cri-proxy-annotation">CRI Proxy annotation</a></li>
+    <li class="toctree-l3"><a href="#annotations-recognized-by-virtlet">Annotations recognized by Virtlet</a></li>
     
-
-    <li class="toctree-l3"><a href="#chowning-9pfs-mounts">Chowning 9pfs mounts</a></li>
-    
-
-    <li class="toctree-l3"><a href="#cpu-model">CPU Model</a></li>
-    
-
-    <li class="toctree-l3"><a href="#disk-driver">Disk driver</a></li>
-    
-
-    <li class="toctree-l3"><a href="#injecting-files-into-the-image">Injecting files into the image</a></li>
-    
-
-    <li class="toctree-l3"><a href="#vcpu-count">vCPU count</a></li>
+        <ul>
+        
+            <li><a class="toctree-l4" href="#cri-proxy-annotation">CRI Proxy annotation</a></li>
+        
+            <li><a class="toctree-l4" href="#chowning-9pfs-mounts">Chowning 9pfs mounts</a></li>
+        
+            <li><a class="toctree-l4" href="#cpu-model">CPU Model</a></li>
+        
+            <li><a class="toctree-l4" href="#disk-driver">Disk driver</a></li>
+        
+            <li><a class="toctree-l4" href="#injecting-files-into-the-image">Injecting files into the image</a></li>
+        
+            <li><a class="toctree-l4" href="#vcpu-count">vCPU count</a></li>
+        
+        </ul>
     
 
     <li class="toctree-l3"><a href="#volume-handling">Volume handling</a></li>
@@ -298,7 +299,7 @@ spec:
         memory: 160Mi
 </code></pre>
 
-<h1 id="annotations-recognized-by-virtlet"><a name="annotations"></a>Annotations recognized by Virtlet</h1>
+<h1 id="annotations-recognized-by-virtlet">Annotations recognized by Virtlet</h1>
 <p>The annotations can be specified under <code>annotations</code> key of the
 <code>metadata</code> part of the pod spec. Note that the values are always
 strings, but they can be parsed in different way by Virtlet (see Type
