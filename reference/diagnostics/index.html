@@ -13,7 +13,6 @@
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
@@ -23,9 +22,7 @@
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js" defer></script>
-  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>hljs.initHighlightingOnLoad();</script> 
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script> 
   
 </head>
 
@@ -122,7 +119,7 @@
                 </li>
                 <li class="">
                     
-    <a class="" href="../virtletctl/virtletctl/">Command Line Tool</a>
+    <a class="" href="../virtletctl/">Command Line Tool</a>
                 </li>
     </ul>
 	    </li>
@@ -195,7 +192,7 @@
             <div class="section">
               
                 <h1 id="direct-invocation">Direct invocation</h1>
-<p>The most basic diagnostics command is <a href="../virtletctl/virtletctl_diag_dump/">virtletctl diag dump</a>:</p>
+<p>The most basic diagnostics command is <a href="../virtletctl/#virtletctl-diag-dump">virtletctl diag dump</a>:</p>
 <pre><code class="bash">$ virtletctl diag out/
 $ ls -lR out
 total 0
@@ -249,7 +246,7 @@ node that runs Virtlet:</p>
 <p>It's also possible to dump Virtlet diagnostics as JSON to stdout using
 <code>virtletctl diag dump --json</code>. The JSON file can be subsequently
 unpacked into the aforementioned directory structure using
-<a href="../virtletctl/virtletctl_diag_unpack/">virtletctl diag unpack</a>.</p>
+<a href="../virtletctl/#virtletctl-diag-unpack">virtletctl diag unpack</a>.</p>
 <h2 id="sonobuoy">Sonobuoy</h2>
 <p>Virtlet diagnostics can be run as a
 <a href="https://github.com/heptio/sonobuoy">Sonobuoy</a> plugin.  Unfortunately,
@@ -275,7 +272,7 @@ $ sonobuoy retrieve
 </code></pre>
 
 <p>The diagnostics results are placed under <code>plugins/virtlet/results</code> and
-can be unpacked using <a href="../virtletctl/virtletctl_diag_unpack/">virtletctl diag unpack</a>:</p>
+can be unpacked using <a href="../virtletctl/#virtletctl-diag-unpack">virtletctl diag unpack</a>:</p>
 <pre><code class="bash">$ virtletctl diag unpack out/ &lt;sonobuoy_output_dir/plugins/virtlet/results
 </code></pre>
               
