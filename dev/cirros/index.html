@@ -141,7 +141,34 @@
     <a class="current" href="./">Building a custom CirrOS image</a>
     <ul class="subnav">
             
+    <li class="toctree-l3"><a href="#building-own-cirros-image">Building own CirrOS image</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#preparation">Preparation</a></li>
+        
+            <li><a class="toctree-l4" href="#applying-the-patches">Applying the patches</a></li>
+        
+            <li><a class="toctree-l4" href="#retrieving-the-sources-of-buildroot-packages">Retrieving the sources of buildroot packages</a></li>
+        
+            <li><a class="toctree-l4" href="#building-buildroot">Building buildroot</a></li>
+        
+            <li><a class="toctree-l4" href="#downloading-kernel-and-grub">Downloading kernel and GRUB</a></li>
+        
+            <li><a class="toctree-l4" href="#building-the-final-image">Building the final image</a></li>
+        
+        </ul>
+    
+
     </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../logging/">Logging architecture</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../guidelines/">Guidelines</a>
                 </li>
     </ul>
 	    </li>
@@ -182,13 +209,82 @@
           <div role="main">
             <div class="section">
               
-                <p>CirrOS build instructions</p>
+                <h1 id="building-own-cirros-image">Building own CirrOS image</h1>
+<p>The purpose of this document is to provide instructions for building
+custom CirrOS image that has proper Python-based <a href="http://cloudinit.readthedocs.io/en/latest/">Cloud Init</a>
+implementation installed and added to the init sequence.</p>
+<h2 id="preparation">Preparation</h2>
+<p>This example is based on the official sources hosted on <a href="https://git.launchpad.net/cirros">launchpad</a>.
+Assuming that you have already installed git, clone the above repository with
+the following command:</p>
+<pre><code class="sh">git clone https://git.launchpad.net/cirros
+</code></pre>
+
+<p>Let's go to the <code>cirros/</code>. The assumption is that the rest of the
+commands are run in that directory.</p>
+<pre><code class="sh">cd cirros
+patch -p1 &lt;/path/to/virtlet-repository/contrib/cirros-patches/cirros-repo.diff
+</code></pre>
+
+<p>Create the <code>downloads</code> directory and download the buildroot tar into it:</p>
+<pre><code class="sh">mkdir ../downloads ; ln -s ../downloads
+br_ver=&quot;2017.02&quot;
+( cd downloads ; wget http://buildroot.uclibc.org/downloads/buildroot-${br_ver}.tar.gz )
+tar xf buildroot-${br_ver}.tar.gz
+</code></pre>
+
+<p>Ensure that you have installed the packages listed in <code>cirros/bin/system-setup</code>
+(package names can be different for different Linux distros, for Debian-based
+system you can simply use <code>cirros/bin/system-setup</code> to install them).</p>
+<h2 id="applying-the-patches">Applying the patches</h2>
+<pre><code class="sh">( cd buildroot &amp;&amp; QUILT_PATCHES=$PWD/../patches-buildroot quilt push -a )
+( cd buildroot &amp;&amp; patch -p1 &lt;/path/to/virtlet-repository/contrib/cirros-patches/buildroot.diff )
+</code></pre>
+
+<h2 id="retrieving-the-sources-of-buildroot-packages">Retrieving the sources of buildroot packages</h2>
+<pre><code class="sh">make ARCH=i386 br-source
+</code></pre>
+
+<h2 id="building-buildroot">Building buildroot</h2>
+<p>The initial <code>make</code> command is expected to fail.</p>
+<pre><code class="sh">make ARCH=i386 OUT_D=$PWD/output/i386
+</code></pre>
+
+<p>Use the following command after <code>make</code> fails:</p>
+<pre><code class="sh">( cd output/i386/buildroot ; cp -a build/python-cloud-init*/build/lib/cloudinit target/usr/lib/python2.7/site-packages )
+sed -i -e 's/BR2_PACKAGE_PYTHON_CLOUD_INIT=y/# BR2_PACKAGE_PYTHON_CLOUD_INIT is not set/' conf/buildroot-i386.config
+</code></pre>
+
+<p>then run the previous build command again:</p>
+<pre><code class="sh">make ARCH=i386 OUT_D=$PWD/output/i386
+</code></pre>
+
+<h2 id="downloading-kernel-and-grub">Downloading kernel and GRUB</h2>
+<p>You need to set a correct version of kernel (the versions are listed
+<a href="https://launchpad.net/ubuntu/+source/linux">here</a>) e.g.:</p>
+<pre><code class="sh">kver=&quot;4.13.0-32.35&quot;
+./bin/grab-kernels &quot;$kver&quot;
+</code></pre>
+
+<p>Same for GRUB (version list is <a href="https://launchpad.net/ubuntu/+source/grub2">here</a>):</p>
+<pre><code class="sh">gver=&quot;2.02~beta3-4ubuntu2.2&quot;
+./bin/grab-grub-efi &quot;$gver&quot;
+</code></pre>
+
+<h2 id="building-the-final-image">Building the final image</h2>
+<pre><code class="sh">sudo ./bin/bundle -v --arch=i386 output/i386/rootfs.tar \
+      download/kernel-i386.deb download/grub-efi-i386.tar.gz output/i386/images
+</code></pre>
+
+<p>The final image will be named <code>output/i386/images/disk.img</code>.</p>
               
             </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../logging/" class="btn btn-neutral float-right" title="Logging architecture">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../virtlet-ci/" class="btn btn-neutral" title="Virtlet CI"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -219,6 +315,8 @@
       
         <span><a href="../virtlet-ci/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../logging/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

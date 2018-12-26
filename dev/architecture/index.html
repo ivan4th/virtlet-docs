@@ -121,13 +121,17 @@
     <a class="current" href="./">Virtlet architecture</a>
     <ul class="subnav">
             
-    <li class="toctree-l3"><a href="#general-architecture-diagram">General architecture diagram</a></li>
+    <li class="toctree-l3"><a href="#overview">Overview</a></li>
     
-
-    <li class="toctree-l3"><a href="#virtlet-networking-architecture">Virtlet networking architecture</a></li>
-    
-
-    <li class="toctree-l3"><a href="#other-topics">Other topics ...</a></li>
+        <ul>
+        
+            <li><a class="toctree-l4" href="#virtlet-manager">Virtlet manager</a></li>
+        
+            <li><a class="toctree-l4" href="#vmwrapper">vmwrapper</a></li>
+        
+            <li><a class="toctree-l4" href="#cri-proxy">CRI Proxy</a></li>
+        
+        </ul>
     
 
     </ul>
@@ -151,6 +155,14 @@
                 <li class="">
                     
     <a class="" href="../cirros/">Building a custom CirrOS image</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../logging/">Logging architecture</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../guidelines/">Guidelines</a>
                 </li>
     </ul>
 	    </li>
@@ -191,10 +203,49 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="general-architecture-diagram">General architecture diagram</h1>
-<h1 id="virtlet-networking-architecture">Virtlet networking architecture</h1>
-<h1 id="other-topics">Other topics ...</h1>
-<p>Block devices, the details of persistent rootfs/devicemapper, etc.</p>
+                <h1 id="overview">Overview</h1>
+<p>The following figure provides a general view of Virtlet architecture:</p>
+<p><img alt="Virtlet Architecture" src="../img/virtlet.png" /></p>
+<p>Virtlet consists of the following components:</p>
+<ul>
+<li><a href="https://github.com/Mirantis/virtlet/tree/master/cmd/virtlet">Virtlet manager</a>
+  which implements CRI interface for virtualization and image handling</li>
+<li><a href="http://libvirt.org">libvirt</a> instance</li>
+<li><a href="https://github.com/Mirantis/virtlet/tree/master/cmd/vmwrapper">vmwrapper</a>
+  which is responsible for setting up the environment for emulator</li>
+<li>the emulator, currently <a href="http://www.qemu-project.org/">qemu</a> with
+  KVM support (with a possibility to disable KVM)</li>
+</ul>
+<p>In addition to the above, our example setup uses
+<a href="https://github.com/Mirantis/criproxy">CRI proxy</a> which provides the
+possibility to mix dockershim and VM based workloads on the same k8s
+node.</p>
+<h2 id="virtlet-manager">Virtlet manager</h2>
+<p>The main binary is responsible for providing API fullfiling
+<a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/container-runtime-interface-v1.md">CRI specification</a>.
+It serves the requests from kubelet by doing the following:</p>
+<ul>
+<li>setting up libvirt VM environment (virtual drives, network
+  interfaces, trimming resources like RAM, CPU)</li>
+<li>performing CNI setup</li>
+<li>telling libvirt to call vmwrapper instead of using emulator directly</li>
+<li>querying libvirt for VM statuses</li>
+<li>instructing libvirt to stop VMs</li>
+<li>performing CNI teardown</li>
+<li>and finally calling libvirt to tear down VM environment.</li>
+</ul>
+<h2 id="vmwrapper">vmwrapper</h2>
+<p><code>vmrapper</code> is run by libvirt and wraps the emulator (QEMU/KVM).  It
+requests tap file descriptor from Virtlet, adds command line
+arguments needed by the emulator to use the tap device and then
+<code>exec</code>s the emulator.</p>
+<h2 id="cri-proxy">CRI Proxy</h2>
+<p><a href="https://github.com/Mirantis/criproxy">CRI Proxy</a> is an external
+project provides a way to run multiple CRI implementations on the same
+node, e.g. Virtlet and dockershim. This is handy for running
+infrastructure pods such as kube-proxy. It's possible to reuse
+dockershim component from kubelet to make it possible to have Docker
+as one of CRI implementations on the multi-runtime nodes.</p>
               
             </div>
           </div>

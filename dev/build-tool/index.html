@@ -133,6 +133,17 @@
     <a class="current" href="./">Build Tool</a>
     <ul class="subnav">
             
+    <li class="toctree-l3"><a href="#buildcmdsh">build/cmd.sh</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#script-usage">Script usage</a></li>
+        
+            <li><a class="toctree-l4" href="#control-flags">Control flags</a></li>
+        
+        </ul>
+    
+
     </ul>
                 </li>
                 <li class="">
@@ -142,6 +153,14 @@
                 <li class="">
                     
     <a class="" href="../cirros/">Building a custom CirrOS image</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../logging/">Logging architecture</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../guidelines/">Guidelines</a>
                 </li>
     </ul>
 	    </li>
@@ -182,7 +201,146 @@
           <div role="main">
             <div class="section">
               
-                <p>build/cmd.sh</p>
+                <h1 id="buildcmdsh">build/cmd.sh</h1>
+<p><code>build/cmd.sh</code> script helps automating usage of docker build
+container using <a href="https://github.com/Mirantis/virtlet/blob/master/images/Dockerfile.build">Dockerfile.build</a>.</p>
+<h2 id="script-usage">Script usage</h2>
+<p>Currently the script supports the following commands:</p>
+<ul>
+<li><code>./build/cmd.sh build</code></li>
+<li><code>./build/cmd.sh test</code></li>
+<li><code>./build/cmd.sh copy</code></li>
+<li><code>./build/cmd.sh copy-dind</code></li>
+<li><code>./build/cmd.sh start-dind</code></li>
+<li><code>./build/cmd.sh vsh</code></li>
+<li><code>./build/cmd.sh stop</code></li>
+<li><code>./build/cmd.sh clean</code></li>
+<li><code>./build/cmd.sh gotest [TEST_ARGS...]</code></li>
+<li><code>./build/cmd.sh gobuild [BUILD_ARGS...]</code></li>
+<li><code>./build/cmd.sh run CMD...</code></li>
+<li><code>./build/cmd.sh release TAG</code></li>
+</ul>
+<p><code>build</code>, <code>test</code>, <code>integration</code>, <code>run</code>, <code>gobuild</code>, <code>gotest</code>, <code>copy</code>,
+<code>copy-back</code> and <code>prepare-vendor</code> commands check whether the build
+container image and data volumes are available before proceeding. They
+build the image if necessary and create the data volumes if they don't
+exist, then, on each run they copy the local sources into
+<code>virtlet_src</code> data volume.</p>
+<p>The build container used by <code>build/cmd.sh</code> needs to be able to access
+Docker socket inside it. By default it mounts <code>/var/run/docker.sock</code>
+inside the container but you can override the path by setting
+<code>DOCKER_SOCKET_PATH</code> environment variable.</p>
+<h3 id="build">build</h3>
+<p>Performs a full build of Virtlet. Also builds
+<code>mirantis/virtlet:latest</code> image.</p>
+<h3 id="test">test</h3>
+<p>Runs the unit tests inside a build container.</p>
+<h3 id="integration">integration</h3>
+<p>Runs the integration tests. KVM is disabled for these so as to make them run
+inside limited CI environments that don't support kernel virtualization.
+You need to invoke <code>build/cmd.sh build</code> before running this command.</p>
+<h3 id="copy">copy</h3>
+<p>Extracts output binaries from build container into <code>_output/</code> in the
+current directory.</p>
+<h3 id="copy-back">copy-back</h3>
+<p>Syncs local <code>_output_</code> contents to the build container. This is used
+by CI for passing build artifacts between the jobs in a workflow.</p>
+<h3 id="copy-dind">copy-dind</h3>
+<p>Copies the binaries into kube-node-1 of <a href="https://github.com/kubernetes-sigs/kubeadm-dind-cluster">kubeadm-dind-cluster</a> (or
+kube-master if <code>VIRTLET_ON_MASTER</code> environment variable is set to a
+non-empty value). You need to do <code>dind-cluster...sh up</code> to be able to
+use this command.</p>
+<h3 id="start-dind">start-dind</h3>
+<p>Starts Virtlet on kube-node-1 of <a href="https://github.com/kubernetes-sigs/kubeadm-dind-cluster">kubeadm-dind-cluster</a> (or
+kube-master if <code>VIRTLET_ON_MASTER</code> environment variable is set to a
+non-empty value). You need to do <code>dind-cluster...sh up</code> and
+<code>build/cmd.sh copy-dind</code> to be able to use this command.
+This command copies locally-built <code>mirantis/virtlet</code> image to
+the DIND node that will run Virtlet if it doesn't exist there
+or if <code>FORCE_UPDATE_IMAGE</code> is set to a non-empty value.
+This command requires <code>kubectl</code>.</p>
+<h3 id="prepare-all-nodes">prepare-all-nodes</h3>
+<p>Makes all the worker nodes in the <a href="https://github.com/kubernetes-sigs/kubeadm-dind-cluster">kubeadm-dind-cluster</a> ready for
+Virtlet pod, but doesn't start Virtlet pod on them (it doesn't apply
+<code>extraRuntime=virtlet</code> label). This is done automatically for the
+Virtlet node during <code>start-dind</code>, but it's necessary to do so for all
+the worker nodes for Virtlet e2e config test to pass.</p>
+<h3 id="vsh">vsh</h3>
+<p>Starts an interactive shell using build container. Useful for debugging.</p>
+<h3 id="stop">stop</h3>
+<p>Removes the build container.</p>
+<h3 id="clean">clean</h3>
+<p>Removes the build container and image along with data volumes as well as
+the binaries in local <code>_output</code> directory.</p>
+<h3 id="gotest">gotest</h3>
+<p>Runs unit tests suite in build container - suitable for use with IDEs/editors.</p>
+<h3 id="gobuild">gobuild</h3>
+<p>Runs go build in the build container. This command can be used for
+syntax checking in IDEs/editors. It assumes that <code>build</code> command was invoked
+at least once since the last <code>clean</code>.</p>
+<h3 id="run">run</h3>
+<p>Runs the specified command inside the build container. This command can be
+used to debug the build scripts.</p>
+<h3 id="prepare-vendor">prepare-vendor</h3>
+<p>Populates <code>vendor/</code> directory inside the build container. This is used
+by CI.</p>
+<h3 id="start-build-container">start-build-container</h3>
+<p>Starts the build container. This is done automatically by other
+<code>build/cmd.sh</code> commands that need the build container.</p>
+<h3 id="update-bindata">update-bindata</h3>
+<p>Updates the generated bindata. Run this command if you modify
+anything under <code>deploy/data</code>.</p>
+<h3 id="update-generated">update-generated</h3>
+<p>Updates the generated Go files except for bindata. Run this command if
+you modify Virtlet CRD structs.</p>
+<h3 id="update-docs">update-docs</h3>
+<p>Updates the documentation on virtletctl an the Virtlet config.</p>
+<h3 id="e2e">e2e</h3>
+<p>Runs Virtlet e2e tests against the currently running DIND cluster.
+You can also pass test options to this command:</p>
+<pre><code>build/cmd.sh e2e -test.v
+</code></pre>
+
+<p>You can also pass <a href="https://onsi.github.io/ginkgo/">Ginkgo</a> options to
+this command, e.g. the following command will run only the tests that
+have <code>Should have default route</code> in their description:</p>
+<pre><code>build/cmd.sh e2e -test.v -ginkgo.focus=&quot;Should have default route&quot;
+</code></pre>
+
+<p>This command requires <code>kubectl</code>.</p>
+<p>Virtlet e2e tests can produce JUnit-style XML output if asked to do so:</p>
+<pre><code>build/cmd.sh e2e -test.v -junitOutput /tmp/junit.xml
+build/cmd.sh run 'cat /tmp/junit.xml' &gt;junit.xml
+</code></pre>
+
+<h2 id="control-flags">Control flags</h2>
+<p>Some of the script commands also be customized by using environment variables:</p>
+<ul>
+<li>
+<p><code>VIRTLET_SKIP_RSYNC=1</code> disables syncing of sources in the build docker container. If set, changes made to the sources
+  on the host machine will not be included into the build.</p>
+</li>
+<li>
+<p><code>VIRTLET_RSYNC_PORT=18730</code> - port to use for rsync.</p>
+</li>
+<li>
+<p><code>VIRTLET_ON_MASTER=1</code> - start <code>virtlet</code> on the master (API) k8s node rather than on the worker.</p>
+</li>
+<li>
+<p><code>DOCKER_SOCKET_PATH=/var/run/docker.sock</code> - docker Unix socket path to mount into the build container.</p>
+</li>
+<li>
+<p><code>DOCKER_HOST</code> - docker server to be used in the build server (when it differs from the default Unix socket).</p>
+</li>
+<li>
+<p><code>FORCE_UPDATE_IMAGE=1</code> - always propagate <code>virtlet</code> docker image from the host into DinD cluster (by default, it is done
+  when no such image exist).</p>
+</li>
+<li>
+<p><code>IMAGE_REGEXP_TRANSLATION=1</code> enables regexp syntax in image name translation rules.
+  See <a href="../../reference/images/#image-name-translation">Image Name Translation</a> for more details.</p>
+</li>
+</ul>
               
             </div>
           </div>

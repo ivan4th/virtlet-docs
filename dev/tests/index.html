@@ -129,13 +129,13 @@
     <a class="current" href="./">Running the tests</a>
     <ul class="subnav">
             
-    <li class="toctree-l3"><a href="#unit-tests">Unit tests</a></li>
+    <li class="toctree-l3"><a href="#running-unit-and-integration-tests">Running unit and integration tests</a></li>
     
 
-    <li class="toctree-l3"><a href="#integration-tests">Integration tests</a></li>
+    <li class="toctree-l3"><a href="#running-tests-on-mac-os-x">Running tests on Mac OS X</a></li>
     
 
-    <li class="toctree-l3"><a href="#e2e-tests">E2E tests</a></li>
+    <li class="toctree-l3"><a href="#running-e2e-tests">Running e2e tests</a></li>
     
 
     </ul>
@@ -151,6 +151,14 @@
                 <li class="">
                     
     <a class="" href="../cirros/">Building a custom CirrOS image</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../logging/">Logging architecture</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../guidelines/">Guidelines</a>
                 </li>
     </ul>
 	    </li>
@@ -191,9 +199,129 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="unit-tests">Unit tests</h1>
-<h1 id="integration-tests">Integration tests</h1>
-<h1 id="e2e-tests">E2E tests</h1>
+                <h1 id="running-unit-and-integration-tests">Running unit and integration tests</h1>
+<p>In order to run unit tests, use:</p>
+<pre><code>$ build/cmd.sh test
+</code></pre>
+
+<p>In order to run integration, use:</p>
+<pre><code>$ build/cmd.sh integration
+</code></pre>
+
+<p>There's a number of 'golden master' tests in Virtlet. These tests work
+by generating some JSON data and comparing it to the previous version
+of that data stored in git index (i.e. staged or committed). The test
+fails if there's any difference, and the file is updated in this case.
+You need to stage or commit the changes to make the test pass (or fix
+the code so there's no changes).</p>
+<p>Sample usage:</p>
+<pre><code>$ cd pkg/libvirttools/
+
+$ ../../build/cmd.sh gotest
+--- FAIL: TestDomainDefinitions (0.35s)
+    --- FAIL: TestDomainDefinitions/cloud-init_with_user_data (0.05s)
+        gm.go:58: got difference for &quot;TestDomainDefinitions/cloud-init_with_user_data&quot;:
+                diff --git a/pkg/libvirttools/TestDomainDefinitions__cloud-init_with_user_data.json b/pkg/libvirttools/TestDomainDefinitions__cloud-init_with_user_data.json
+                index e852f8b..6db03cc 100755
+                --- a/pkg/libvirttools/TestDomainDefinitions__cloud-init_with_user_data.json
+                +++ b/pkg/libvirttools/TestDomainDefinitions__cloud-init_with_user_data.json
+                @@ -66,7 +66,7 @@
+                     &quot;name&quot;: &quot;domain conn: iso image&quot;,
+                     &quot;data&quot;: {
+                       &quot;meta-data&quot;: &quot;{\&quot;instance-id\&quot;:\&quot;testName_0.default\&quot;,\&quot;local-hostname\&quot;:\&quot;testName_0\&quot;,\&quot;public-keys\&quot;:[\&quot;key1\&quot;,\&quot;key2\&quot;]}&quot;,
+                -      &quot;user-data&quot;: &quot;#cloud-config\nusers:\n- name: cloudy\n&quot;
+                +      &quot;user-data&quot;: &quot;#cloud-config\nusers:\n- name: cloudy1\n&quot;
+                     }
+                   },
+                   {
+FAIL
+exit status 1
+FAIL    github.com/Mirantis/virtlet/pkg/libvirttools    0.466s
+
+$ # accept the changes by staging them
+$ git add TestDomainDefinitions__cloud-init_with_user_data.json
+
+$ ../../build/cmd.sh gotest
+PASS
+ok      github.com/Mirantis/virtlet/pkg/libvirttools    0.456s
+</code></pre>
+
+<h1 id="running-tests-on-mac-os-x">Running tests on Mac OS X</h1>
+<p>To run tests on Mac OS X you need a working Go 1.8 installation and
+<a href="https://glide.sh/">Glide</a>. You also need to install <code>cdrtools</code>
+package and then make a symbolic link for <code>mkisofs</code> named
+<code>genisoimage</code>:</p>
+<pre><code>$ brew install cdrtools
+$ sudo ln -s `which mkisofs` /usr/local/bin/genisoimage
+</code></pre>
+
+<p>Some of the tests such as integration/e2e and network related tests
+only run on Linux. That being said, some of the tests do run on Mac OS
+X. First you need to make sure Virtlet is checked out as
+<code>$GOPATH/src/github.com/Mirantis/virtlet</code> and install the glide deps:</p>
+<pre><code>$ cd &quot;$GOPATH/src/github.com/Mirantis/virtlet&quot;
+$ glide install --strip-vendor
+</code></pre>
+
+<pre><code>$ go test -v ./pkg/{flexvolume,imagetranslation,libvirttools,metadata,stream,utils,tapmanager}
+</code></pre>
+
+<h1 id="running-e2e-tests">Running e2e tests</h1>
+<p>You need a running Kubernetes cluster to run e2e tests.  Virtlet e2e
+tests can be run using Virtlet build container:</p>
+<pre><code>$ # run some e2e tests
+$ build/cmd.sh e2e -test.v
+
+$ # run e2e tests that have 'Should have default route' in their description
+$ build/cmd.sh e2e -test.v -ginkgo.focus=&quot;Should have default route&quot;
+</code></pre>
+
+<p>You can also build the e2e runner locally and run it on either Mac or
+Linux:</p>
+<pre><code>$ glide i --strip-vendor
+$ go test -i -c -o _output/virtlet-e2e-tests ./tests/e2e
+$ _output/virtlet-e2e-tests -ginkgo.v
+</code></pre>
+
+<p>Virtlet uses <a href="https://onsi.github.io/ginkgo/">Ginkgo</a> for its e2e
+tests, so you can refer to the list of
+<a href="https://onsi.github.io/ginkgo/#the-ginkgo-cli">Ginkgo CLI flags</a>. The
+Ginkgo flags should be passed using <code>-ginkgo.XXX</code> convention.</p>
+<p>The following additional flags are recognized by Virtlet e2e runner:</p>
+<ul>
+<li><code>-cluster-url=URL</code> (default <code>http://127.0.0.1:8080</code>) specifies an
+  insecure apiserver endpoint to use. You can use <code>kubectl proxy</code> when
+  running the tests against a real cluster.</li>
+<li><code>-image=LOCATION</code> (defaults to Virtlet's modified CirrOS image)
+  specifies the location of the image to use for the tests. The
+  <code>LOCATION</code> is an URL without the protocol prefix (<code>http(s)://</code>).</li>
+<li><code>-sshuser=USER</code> specifies ssh user name that should be used with the
+  image.</li>
+<li><code>-include-cloud-init-tests=</code> (defaults to false) specifies that
+  the cloud-init tests should included.</li>
+<li><code>-memoryLimit=N</code> (defaults to 160) specifies the memory limit for
+  the VM that should be used. You may need to adjust this setting
+  according to the requirements of the image.</li>
+<li><code>-include-unsafe-tests</code> (defaults to false) includes the tests that
+  can be unsafe if they're run outside the build container.
+  <strong>Use with care!</strong></li>
+<li><code>-junitOutput=FILENAME</code> specifies that a JUnit XML output file
+  should be produced by the runner.</li>
+</ul>
+<p>Tests may have several labels which are included in their names and
+can be used in <code>-ginkgo.focus</code> / <code>ginkgo.skip</code> options:</p>
+<ul>
+<li><code>[Conformance]</code> specifies the tests that any properly configured
+  Kubernetes cluster with Virtlet should pass.</li>
+<li><code>[Heavy]</code> specifies the tests that shouldn't be run when KVM cannot
+  be used, for example, on Virtlet public CI.</li>
+<li><code>[Disruptive]</code> tests may break your cluster or cause some or all of
+  the VMs to be restarted.</li>
+<li><code>[MultiCNI]</code> tests should be used to examine a multi-CNI setup.</li>
+<li><code>[Flaky]</code> tests contain flakes that should be fixed. This label
+  basically designates a known bug in either the test or Virtlet
+  itself. These tests are skipped on Virtlet public CI.</li>
+</ul>
               
             </div>
           </div>

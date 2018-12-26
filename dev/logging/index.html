@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Setting up the environment - Virtlet</title>
+  <title>Logging architecture - Virtlet</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -16,8 +16,8 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Setting up the environment";
-    var mkdocs_page_input_path = "dev/setup.md";
+    var mkdocs_page_name = "Logging architecture";
+    var mkdocs_page_input_path = "dev/logging.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -120,18 +120,9 @@
                     
     <a class="" href="../architecture/">Virtlet architecture</a>
                 </li>
-                <li class=" current">
+                <li class="">
                     
-    <a class="current" href="./">Setting up the environment</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l3"><a href="#prerequisites">Prerequisites</a></li>
-    
-
-    <li class="toctree-l3"><a href="#running-the-local-environment">Running the local environment</a></li>
-    
-
-    </ul>
+    <a class="" href="../setup/">Setting up the environment</a>
                 </li>
                 <li class="">
                     
@@ -149,9 +140,23 @@
                     
     <a class="" href="../cirros/">Building a custom CirrOS image</a>
                 </li>
-                <li class="">
+                <li class=" current">
                     
-    <a class="" href="../logging/">Logging architecture</a>
+    <a class="current" href="./">Logging architecture</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#vm-logging">VM Logging</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#redirecting-stdout-and-stderr-into-unix-socket">Redirecting stdout and stderr into unix socket</a></li>
+        
+            <li><a class="toctree-l4" href="#redirecting-stdout-and-stderr-into-pty">Redirecting stdout and stderr into pty</a></li>
+        
+        </ul>
+    
+
+    </ul>
                 </li>
                 <li class="">
                     
@@ -186,7 +191,7 @@
         
       
     
-    <li>Setting up the environment</li>
+    <li>Logging architecture</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -196,69 +201,64 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="prerequisites">Prerequisites</h2>
-<p>You'll need the following to run the local environment:</p>
+                <h1 id="vm-logging">VM Logging</h1>
+<p>Virtlet runs many VMs on Kubernetes and each of them writes something to <code>stdout</code> and <code>stderr</code>. User
+is given two options:</p>
+<ol>
+<li>redirect <code>stdout</code>/<code>stderr</code> to unix socket (DEFAULT)</li>
+<li>redirect <code>stdout</code>/<code>stderr</code> into pty console</li>
+</ol>
+<h2 id="redirecting-stdout-and-stderr-into-unix-socket">Redirecting stdout and stderr into unix socket</h2>
+<p>By default VM logs are sent to unix socket:</p>
+<pre><code>/var/lib/libvirt/streamer.sock
+</code></pre>
+
+<p>This option is enabled by default. If you want to disable it set <code>disable_logging</code> to true in virtlet-config configmap.</p>
+<h3 id="architecture">Architecture</h3>
+<p>There is one directory on host needed:</p>
 <ul>
-<li>SELinux/AppArmor disabled on the host (to disable them, follow the
-  documentation ofthe Linux distribution that you run on the host)</li>
-<li>if host have libvirt installed, it should be stopped when working
-  with Virtlet</li>
-<li><a href="https://www.docker.com">Docker</a> should be installed on the host and
-  the user account on which Virtlet will be built and run should be
-  properly configured to use that Docker daemon (likely adding the
-  user account into the group in which Docker deamon is running should
-  be enough, but please follow the Docker documentation for your Linux
-  distribution),</li>
-<li><a href="https://github.com/kubernetes-sigs/kubeadm-dind-cluster/">kubeadm-dind-cluster</a>
-  script for Kubernetes version 1.12 (<code>dind-cluster-v1.9.sh</code>).</li>
+<li><strong>/var/log/pods</strong> (predefined by Kubernetes) is where Kubernetes expects JSON formatted logs to appear.</li>
 </ul>
-<p>You can get the cluster startup script like this:</p>
-<pre><code>$ wget -O ~/dind-cluster-v1.12.sh https://github.com/kubernetes-sigs/kubeadm-dind-cluster/releases/download/v0.1.0/dind-cluster-v1.12.sh
-$ chmod +x ~/dind-cluster-v1.12.sh
+<p>NOTE: It is important to configure volume mount for <code>mirantis/virtlet</code>.</p>
+<p>Kubernetes is not able to find and understand raw log files that contain direct dumps from VM. Therefore
+we run a worker which is reformatting VM logs into a special JSON format that is understood
+by Kubernetes.</p>
+<p>Provided that redirecting <code>stdout</code> and <code>stderr</code> to unix socket is turned on (DEFAULT)
+user should be able to see logs on Kubernetes Dashboard:</p>
+<p><img alt="Logging screenshot" src="../img/logging-screenshot.png" /></p>
+<p>Obtaining logs from CLI should also work:</p>
+<pre><code class="bash">$ kubectl logs cirros-vm
+...
+=== datasource: nocloud local ===
+instance-id: cirros-vm-001
+name: N/A
+availability-zone: N/A
+local-hostname: cirros-vm
+launch-index: N/A
+=== cirros: current=0.3.5 uptime=1.75 ===
+  ____               ____  ____
+ / __/ __ ____ ____ / __ / __/
+   http://cirros-cloud.net
+
+
+login as 'cirros' user. default password: 'cubswin:)'. use 'sudo' for root.
 </code></pre>
 
-<h2 id="running-the-local-environment">Running the local environment</h2>
-<p>In order to start locally-built Virtlet and CRI proxy on <code>kubeadm-dind-cluster</code>: </p>
-<pre><code>$ # Remove any previous build container &amp; related docker volumes
-$ # This is optional step that should be done if the build container
-$ # doesn't match current Virtlet sources (i.e. is too old)
-$ build/cmd.sh clean
-
-$ # build Virtlet binaries &amp; the image
-$ build/cmd.sh build
-
-$ # start DIND cluster
-$ ~/dind-cluster-v1.12.sh up
-
-$ # copy binaries to kube-node-1
-$ build/cmd.sh copy-dind
-
-$ # inject Virtlet image into the DIND node and start the Virtlet DaemonSet
-$ build/cmd.sh start-dind
-
-$ # run some e2e tests
-$ build/cmd.sh e2e -test.v
-
-$ # run e2e tests that have 'Should have default route' in their description
-$ build/cmd.sh e2e -test.v -ginkgo.focus=&quot;Should have default route&quot;
-
-$ # Restart the DIND cluster. Binaries from copy-dind are preserved
-$ # (you may copy newer ones with another copy-dind command)
-$ ~/dind-cluster-v1.12.sh up
-
-$ # start Virtlet daemonset again
-$ build/cmd.sh start-dind
-</code></pre>
-
-<p>You may use <a href="https://github.com/coreos/flannel">flannel</a> instead of
-default CNI bridge networking for the test cluster. To do so,
-set <code>CNI_PLUGIN</code> environment variable:</p>
-<pre><code>$ export CNI_PLUGIN=flannel
-</code></pre>
-
-<p>Virtlet uses KVM if it's available by default. To disable it for your
-local development environment, set <code>VIRTLET_DISABLE_KVM</code> environment
-variable to a non-empty value before running <code>build/cmd.sh start-dind</code>.</p>
+<h3 id="limitations">Limitations</h3>
+<p>There is one limitation when redirecting logs to unix socket is enabled:</p>
+<ul>
+<li>Command <code>virsh console &lt;vm&gt;</code> no longer works since libvirt serial port type is 'unix' and not 'pty'. To make <code>virsh console</code> working set <code>disable_logging</code> to true in virtlet-config configmap which will disable logging.</li>
+</ul>
+<h2 id="redirecting-stdout-and-stderr-into-pty">Redirecting stdout and stderr into pty</h2>
+<p>In some cases it may be desired to enable <code>virsh console &lt;VM&gt;</code> command that is disabled in case when
+redirecting everything into files is enabled (see <strong>Limitations</strong> above). Just set <code>disable_logging</code> to true in virtlet-config configmap.</p>
+<h3 id="limitations_1">Limitations</h3>
+<p>There are some limitations when redirecting logs into unix socket is disabled:</p>
+<ul>
+<li>command <code>kubectl logs &lt;MY-POD&gt;</code> will not work</li>
+<li>command <code>kubectl attach &lt;MY-POD&gt;</code> will not work</li>
+<li>Kubernetes Dashboard will not display any logs for Virtlet pods</li>
+</ul>
               
             </div>
           </div>
@@ -266,10 +266,10 @@ variable to a non-empty value before running <code>build/cmd.sh start-dind</code
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../tests/" class="btn btn-neutral float-right" title="Running the tests">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../guidelines/" class="btn btn-neutral float-right" title="Guidelines">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../architecture/" class="btn btn-neutral" title="Virtlet architecture"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../cirros/" class="btn btn-neutral" title="Building a custom CirrOS image"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -295,10 +295,10 @@ variable to a non-empty value before running <code>build/cmd.sh start-dind</code
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../architecture/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../cirros/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../tests/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../guidelines/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
